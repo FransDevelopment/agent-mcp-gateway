@@ -1,4 +1,4 @@
-# Arcede Agent Gateway
+# Agent MCP Gateway
 
 **The universal interface for the agentic web.**
 

@@ -6,7 +6,7 @@
 Turn any website into AI-ready tools. Discover, manage, and expose browser capabilities to AI agents — no API keys or credentials needed.
 
 ### Detailed Description
-Arcede Agent Gateway turns your browser into a universal tool server for AI agents.
+Agent MCP Gateway turns your browser into a universal tool server for AI agents.
 
 When you browse the web, the extension automatically discovers interactive capabilities on every page — search forms, action buttons, navigation elements — and exposes them as structured tools that any MCP-compatible AI agent can use.
 

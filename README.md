@@ -1,50 +1,92 @@
-# Arcede Agent Gateway (Chrome Extension)
+# Arcede Agent Gateway
 
-**Turn your browser into a universal tool server for AI agents.**
+**The universal interface for the agentic web.**
 
-Arcede Agent Gateway is a Chrome extension that discovers interactive capabilities on any webpage (search bars, buttons, forms, navigation) and exposes them as structured **MCP Tools** to local AI agents (Claude Desktop, Cursor, Windsurf, generic MCP clients).
+Arcede Agent Gateway transforms your browser into a secure, privacy-first tool server for AI agents. It discovers interactive capabilities on any webpage—search bars, buttons, forms, navigation—and exposes them as structured **MCP Tools** to any AI agent you choose.
 
-It enables AI agents to "browse" and interact with the web using your existing authenticated session — no API keys, no credentials, no servers.
+Whether you are using our premier agent interface at **[dash.arcede.com](https://dash.arcede.com)** or your own custom local agent, this gateway bridges the gap between AI and the live web.
 
 ![Arcede Agent Gateway](icons/icon-128.png)
 
 ---
 
-## 🚀 Key Features
+## 🚀 The Vision: Agent-Agnostic Web Access
 
-- **Universal Discovery**: Automatically finds tools on *any* website (DOM fallback).
-- **Curated High-Quality Tools**: Bundled, verify definitions for 16+ top sites (Gmail, GitHub, Notion, Linear, etc.) with structured data return.
-- **Privacy-First Architecture**:
-  - **Zero Credentials**: Uses your active browser session.
-  - **On-Demand Extraction**: Data is only read when you explicitly ask your agent.
-  - **No Background Monitoring**: API hooks only install during tool execution.
-  - **Local Only**: No data is sent to Arcede servers.
-- **Data-Capable**: Returns structured data (email metadata, search results) by intercepting internal API calls or reading accessible text.
-- **Standard Protocol**: Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and Google's [WebMCP](https://github.com/google/webmcp).
+Most AI agents are trapped in their own silos, unable to see or effect change on the web without fragile scrapers or giving up your credentials to third-party servers.
+
+**Arcede solves this.**
+
+- **Your Browser, Your Session**: Agents interact through *your* active browser session. If you are logged in, your agent is logged in.
+- **Universal Compatibility**: Built on the open [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), meaning **any** MCP-compliant agent can connect.
+- **Zero-Setup Tools**: No API keys required. The gateway auto-discovers tools on the fly.
 
 ---
 
-## 🛠 Architecture
+## ⚡ Primary Integration: Arcede Dash
 
-The extension consists of three main components:
+The fastest way to experience the agentic web is with **[Arcede Dash](https://dash.arcede.com)**.
 
-### 1. Content Script (`src/content/`)
-Injected into every page to discover and execute tools.
-- **`detector.ts`**: Scans the DOM for interactive elements and WebMCP tags.
-- **`executor.ts`**: Runs tool actions (click, type, submit).
-- **`api-interceptor.ts`**: Captures the site's own internal API responses to return structured data (premium feature).
-- **`a11y-extractor.ts`**: Universal fallback that reads the accessibility tree (ARIA) to return visible text.
+1.  **Install the Extension**: Get it from the Chrome Web Store.
+2.  **Go to Dash**: Navigate to `dash.arcede.com` and connect.
+3.  **Start Automating**: Your Dash agent instantly has access to every tool discovered in your other browser tabs.
 
-### 2. Background Service Worker (`src/background/`)
-Central coordinator and MCP server.
-- **`mcp-server.ts`**: Handles JSON-RPC requests from external agents.
-- **`tool-registry.ts`**: Manages the list of available tools across all tabs.
-- **`session-manager.ts`**: Tracks active tabs and binds curated tools to them.
+---
 
-### 3. Local Bridge (`test/bridge-server.js` + `test/mcp-proxy.js`)
-Connects local stdio-based agents (like Claude Desktop) to the browser extension via HTTP/SSE.
-- **`bridge-server`**: HTTP server that relays requests between stdio proxy and browser.
-- **`mcp-proxy`**: Stdio wrapper that Claude Desktop runs.
+## 🔌 Connecting Other Agents
+
+While designed for Dash, this gateway is fully **agent-agnostic**. You can connect local IDE agents, terminal scripts, or custom bots.
+
+### Supported Clients
+- **Arcede Dash** (Web-Native)
+- **Claude Desktop** (Local)
+- **Cursor / Windsurf** (IDE)
+- **Custom MCP Clients** (Python/Node/Go)
+
+### Local Connection Guide
+To connect a local agent (like Claude Desktop or a Python script), you need to run the local bridge server:
+
+1.  **Clone & Run Bridge**:
+    ```bash
+    git clone https://github.com/nickarced/arcede-agent-gateway
+    cd arcede-agent-gateway
+    node test/bridge-server.js
+    ```
+2.  **Open Bridge Client**: Go to `http://localhost:3000` and enter your Extension ID.
+3.  **Configure Your Agent**: Point your agent's MCP config to the proxy script:
+    ```json
+    {
+      "mcpServers": {
+        "arcede-browser": {
+          "command": "node",
+          "args": ["/path/to/arcede-agent-gateway/test/mcp-proxy.js"]
+        }
+      }
+    }
+    ```
+
+---
+
+## 🛠 Features & Capabilities
+
+- **Smart Discovery**: Automatically identifies forms and interactive elements on *any* website (DOM fallback).
+- **Curated Definitions**: High-reliability, verified tool definitions for 16+ major platforms:
+  - **Productivity**: Notion, Linear, Jira, Trello
+  - **Communication**: Gmail, Slack, Discord
+  - **Dev**: GitHub, Vercel
+  - **Social**: Twitter/X, Reddit
+- **Data-Capable**: Returns structured data (e.g., search results, email metadata) by intercepting internal API calls or reading accessible text.
+- **Privacy Controls**: You decide what data leaves the browser. Granular toggles for metadata, content, and attachments.
+
+---
+
+## 🔒 Privacy Architecture
+
+Arcede is designed with a **zero-trust** architecture for maximum privacy:
+
+1.  **Local Execution**: All logic runs in your browser.
+2.  **No Server Relay**: Data flows directly from your browser to your connected agent. We (Arcede) never see your browsing data.
+3.  **On-Demand Access**: Tools are only active when *you* explicitly prompt your agent. No background monitoring or tracking.
+4.  **Audit Log**: The extension popup provides a real-time log of every tool execution and data access event.
 
 ---
 
@@ -52,76 +94,13 @@ Connects local stdio-based agents (like Claude Desktop) to the browser extension
 
 ```bash
 src/
-├── background/         # Service worker (central logic)
-├── content/            # Content scripts (DOM interaction)
-│   ├── api-interceptor.ts # Captures internal API responses
-│   └── a11y-extractor.ts  # Universal text extraction
-├── curated/            # Hand-tuned tool definitions (Gmail, GitHub, etc.)
-├── popup/              # Extension popup UI (React-like vanilla TS)
-├── privacy/            # Consent manager & audit log
-├── shared/             # Types, constants, and message protocols
-└── registry/           # Community registry client (optional)
+├── background/         # Service worker (central coordination)
+├── content/            # Tool discovery & execution (in-page)
+├── curated/            # Hand-tuned definitions for top sites
+├── popup/              # Privacy controls & audit log
+└── privacy/            # Consent manager
 ```
 
 ---
 
-## 🔧 Setup & Development
-
-### Prerequisites
-- Node.js 18+
-- npm or pnpm
-
-### Build
-```bash
-npm install
-npm run build
-# Output is in dist/
-```
-
-### Load in Chrome
-1. Go to `chrome://extensions`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked**
-4. Select the `dist/` folder
-
-### Connect Claude Desktop / Cursor
-1. Start the bridge server:
-   ```bash
-   node test/bridge-server.js
-   ```
-2. Open `http://localhost:3000` in Chrome and paste your Extension ID.
-3. Configure your agent (e.g., `~/Library/Application Support/Claude/claude_desktop_config.json`):
-   ```json
-   {
-     "mcpServers": {
-       "arcede-browser": {
-         "command": "node",
-         "args": ["/absolute/path/to/arcede-agent-gateway/test/mcp-proxy.js"]
-       }
-     }
-   }
-   ```
-4. Restart your agent.
-
----
-
-## 🔒 Privacy & Security
-
-**We take privacy seriously.** The design enforces strict data minimization:
-1. **Consent**: You must approve data access per-site (metadata vs content).
-2. **Transparency**: The popup shows a live audit log of every tool call and what data was extracted.
-3. **Isolation**: API interception hooks are *only* active during the milliseconds a tool is executing. There is **no passive monitoring** of your browsing.
-4. **Local Execution**: All logic runs in your browser. No data leaves your machine except to the specific AI agent you connected.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions to the **Curated Tool Bundle**! If you want to add support for a new site:
-1. Create a definition in `src/curated/sites/`
-2. Add CSS selectors for stable elements
-3. (Optional) Add an `interception` config to extract structured data from API responses
-
----
-
-**Arcede Agent Gateway** — The browser interface for the agentic web.
+**Arcede Agent Gateway** — The bridge between your browser and your AI.

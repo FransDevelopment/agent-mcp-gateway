@@ -11,7 +11,7 @@ export const gmailTools: CuratedToolSet = {
     tools: [
         {
             name: 'gmail_search',
-            description: 'Search emails in Gmail by query. Supports Gmail search operators (from:, to:, subject:, has:attachment, is:unread, etc.)',
+            description: 'Search emails in Gmail and return visible results. Supports Gmail search operators (from:, to:, subject:, has:attachment, is:unread). Returns email metadata (subject, sender, date) extracted from the page.',
             inputSchema: {
                 type: 'object',
                 properties: {

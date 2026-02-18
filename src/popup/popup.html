@@ -4,7 +4,52 @@
 <head>
   <meta charset="utf-8">
   <title>Arcede Agent Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <style>
+    :root {
+      --background: #f4f1e8;
+      --foreground: #1a1713;
+      --brand-primary: #d97757;
+      --brand-primary-strong: #c6613f;
+      --brand-accent: #6a9bcc;
+      --brand-accent-strong: #5480b2;
+      --brand-soft: #eee9df;
+      --surface: rgba(255, 252, 245, 0.88);
+      --surface-strong: rgba(255, 252, 245, 0.97);
+      --surface-solid: #faf6ef;
+      --surface-muted: #ece7dc;
+      --border: rgba(26, 23, 19, 0.12);
+      --border-strong: rgba(26, 23, 19, 0.22);
+      --muted: #a29a8e;
+      --muted-strong: #6e685f;
+      --accent: #1a1713;
+      --accent-strong: #0c0a08;
+      --shadow-color: 18 16 14;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #141413;
+        --foreground: #faf9f5;
+        --brand-soft: #302e2a;
+        --surface: rgba(255, 255, 255, 0.06);
+        --surface-strong: rgba(255, 255, 255, 0.12);
+        --surface-solid: #1c1b19;
+        --surface-muted: #22201d;
+        --border: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.22);
+        --muted: #b0aea5;
+        --muted-strong: #d6d2c8;
+        --accent: #faf9f5;
+        --accent-strong: #ffffff;
+        --shadow-color: 8 8 7;
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,201 +57,257 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
       width: 380px;
-      max-height: 520px;
+      max-height: 560px;
       overflow-y: auto;
-      background: #fafafa;
-      color: #1a1a1a;
+      background: var(--background);
+      color: var(--foreground);
     }
 
     /* Header */
     .header {
-      padding: 16px;
-      background: #111;
-      color: #fff;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
       gap: 10px;
+      border-bottom: 1px solid var(--border);
     }
 
     .header h1 {
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 15px;
       font-weight: 600;
       flex: 1;
-    }
-
-    .header .version {
-      font-size: 11px;
-      color: #888;
+      color: var(--accent-strong);
     }
 
     .connection-status {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-size: 11px;
-      color: #aaa;
+      color: var(--muted);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       display: inline-block;
     }
 
     .status-dot.connected {
       background: #4caf50;
-      box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+      box-shadow: 0 0 6px rgba(76, 175, 80, 0.35);
     }
 
     .status-dot.disconnected {
-      background: #616161;
+      background: var(--muted);
+      opacity: 0.5;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      padding: 0 18px;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 10px 2px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      flex: 1;
+      text-align: center;
+    }
+
+    .tab:hover {
+      color: var(--muted-strong);
+    }
+
+    .tab.active {
+      color: var(--brand-primary);
+      border-bottom-color: var(--brand-primary);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
     }
 
     /* Stats */
     .stats {
       display: flex;
-      gap: 12px;
-      padding: 12px 16px;
-      background: #f0f0f0;
-      border-bottom: 1px solid #e0e0e0;
+      gap: 1px;
+      background: var(--border);
     }
 
     .stat {
       text-align: center;
       flex: 1;
+      padding: 14px 8px;
+      background: var(--background);
     }
 
     .stat .num {
-      font-size: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
       font-weight: 700;
-      color: #111;
+      color: var(--accent-strong);
     }
 
     .stat .label {
-      font-size: 10px;
-      color: #666;
+      font-size: 9px;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3em;
+      margin-top: 3px;
+      font-weight: 600;
     }
 
     /* Tool list */
     .tools-list {
-      padding: 8px;
+      padding: 10px 12px;
     }
 
     .tool {
-      padding: 10px 12px;
-      margin: 4px 0;
-      background: #fff;
-      border-radius: 8px;
-      border: 1px solid #e8e8e8;
+      padding: 12px 14px;
+      margin: 6px 0;
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(var(--shadow-color) / 0.04),
+        0 4px 12px rgba(var(--shadow-color) / 0.03);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .tool:hover {
+      border-color: var(--border-strong);
+      box-shadow: 0 2px 6px rgba(var(--shadow-color) / 0.06),
+        0 8px 20px rgba(var(--shadow-color) / 0.04);
     }
 
     .tool .name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
-      color: #111;
+      color: var(--accent-strong);
+      font-family: 'Space Grotesk', monospace;
     }
 
     .tool .origin {
-      font-size: 11px;
-      color: #666;
-      margin-top: 2px;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 3px;
     }
 
     .tool .badges {
       display: flex;
       gap: 4px;
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
     /* Badges */
     .badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 500;
-      cursor: help;
+      font-size: 9px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
     }
 
     .badge.native {
-      background: #e8f5e9;
-      color: #2e7d32;
+      background: rgba(76, 175, 80, 0.1);
+      color: #4caf50;
     }
 
     .badge.curated {
-      background: #ede7f6;
-      color: #5e35b1;
+      background: rgba(217, 119, 87, 0.1);
+      color: var(--brand-primary);
     }
 
     .badge.fallback {
-      background: #fff3e0;
-      color: #e65100;
+      background: rgba(251, 191, 36, 0.1);
+      color: #d4a017;
     }
 
     .badge.auth {
-      background: #e3f2fd;
-      color: #1565c0;
+      background: rgba(76, 175, 80, 0.08);
+      color: #4caf50;
     }
 
     .badge.no-auth {
-      background: #fce4ec;
-      color: #c62828;
+      background: rgba(220, 80, 60, 0.08);
+      color: #dc503c;
     }
 
     .badge.community {
-      background: #e0f2f1;
-      color: #00695c;
+      background: rgba(106, 155, 204, 0.1);
+      color: var(--brand-accent);
     }
 
-    /* Onboarding / Empty state */
+    /* Onboarding */
     .onboarding {
-      padding: 28px 20px;
+      padding: 32px 24px;
       text-align: center;
     }
 
     .onboarding .icon {
-      font-size: 32px;
-      margin-bottom: 12px;
+      font-size: 28px;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      background: var(--surface-muted);
+      border-radius: 16px;
     }
 
     .onboarding h2 {
-      font-size: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
+      color: var(--accent-strong);
+      margin-bottom: 6px;
     }
 
     .onboarding p {
       font-size: 12px;
-      color: #666;
+      color: var(--muted);
       line-height: 1.6;
-      margin-bottom: 6px;
     }
 
     .onboarding .steps {
       text-align: left;
-      margin: 16px 0;
-      padding: 0 12px;
+      margin: 20px 0 0;
+      padding: 0 4px;
     }
 
     .onboarding .step {
       display: flex;
       gap: 10px;
-      margin-bottom: 10px;
-      font-size: 12px;
-      color: #444;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: var(--muted-strong);
     }
 
     .onboarding .step-num {
-      width: 20px;
-      height: 20px;
-      background: #111;
+      width: 22px;
+      height: 22px;
+      background: var(--brand-primary);
       color: #fff;
-      border-radius: 50%;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -216,103 +317,66 @@
     }
 
     .onboarding .step-text {
-      line-height: 1.5;
-      padding-top: 1px;
+      line-height: 1.55;
+      padding-top: 2px;
     }
 
-    /* Footer */
-    .footer {
-      padding: 10px 16px;
-      border-top: 1px solid #e0e0e0;
-      background: #f8f8f8;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    /* Settings sections */
+    .settings-section {
+      padding: 14px 18px;
     }
 
-    .footer a {
-      font-size: 11px;
-      color: #1565c0;
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    .footer .footer-version {
+    .settings-section h3 {
       font-size: 10px;
-      color: #aaa;
-    }
-
-    /* Settings panel */
-    .settings {
-      padding: 12px 16px;
-      border-top: 1px solid #e0e0e0;
-      background: #f8f8f8;
-    }
-
-    .settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      padding: 4px 0;
-    }
-
-    .settings-header h3 {
-      font-size: 12px;
       font-weight: 600;
-      color: #333;
-    }
-
-    .settings-header .gear {
-      font-size: 14px;
-      color: #888;
-    }
-
-    .settings-body {
-      display: none;
-      margin-top: 8px;
-    }
-
-    .settings-body.open {
-      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      margin-bottom: 12px;
     }
 
     .setting-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 0;
+      padding: 10px 0;
       gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
     }
 
     .setting-label {
-      font-size: 11px;
-      color: #444;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
     }
 
     .setting-hint {
       font-size: 10px;
-      color: #999;
+      color: var(--muted);
       margin-top: 2px;
+      line-height: 1.5;
     }
 
     .toggle {
       appearance: none;
-      width: 36px;
-      height: 20px;
-      border-radius: 10px;
-      background: #ccc;
+      width: 38px;
+      height: 22px;
+      border-radius: 11px;
+      background: var(--surface-muted);
       position: relative;
       cursor: pointer;
       transition: background 0.2s;
       flex-shrink: 0;
+      border: 1px solid var(--border);
     }
 
     .toggle:checked {
-      background: #4caf50;
+      background: var(--brand-primary);
+      border-color: var(--brand-primary-strong);
     }
 
     .toggle::before {
@@ -325,10 +389,59 @@
       top: 2px;
       left: 2px;
       transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(var(--shadow-color) / 0.12);
     }
 
     .toggle:checked::before {
       transform: translateX(16px);
+    }
+
+    /* Info card in privacy tab */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-top: 4px;
+    }
+
+    .info-card p {
+      font-size: 11px;
+      color: var(--muted-strong);
+      line-height: 1.65;
+    }
+
+    .info-card strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer a {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--brand-accent);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .footer a:hover {
+      color: var(--brand-accent-strong);
+      text-decoration: underline;
+    }
+
+    .footer .footer-version {
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
     }
   </style>
 </head>
@@ -341,46 +454,94 @@
       <span id="connection-label">No clients</span>
     </div>
   </div>
-  <div class="stats">
-    <div class="stat">
-      <div class="num" id="tool-count">0</div>
-      <div class="label">Tools</div>
-    </div>
-    <div class="stat">
-      <div class="num" id="origin-count">0</div>
-      <div class="label">Sites</div>
-    </div>
-    <div class="stat">
-      <div class="num" id="native-count">0</div>
-      <div class="label">Native</div>
-    </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="tools">Tools</div>
+    <div class="tab" data-tab="privacy">Privacy</div>
+    <div class="tab" data-tab="settings">Settings</div>
   </div>
-  <div id="tools-container"></div>
-  <div class="settings" id="settings-panel">
-    <div class="settings-header" id="settings-toggle">
-      <h3>Community Registry</h3>
-      <span class="gear">⚙</span>
+
+  <!-- Tools Tab -->
+  <div class="tab-panel active" id="panel-tools">
+    <div class="stats">
+      <div class="stat">
+        <div class="num" id="tool-count">0</div>
+        <div class="label">Tools</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="origin-count">0</div>
+        <div class="label">Sites</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="native-count">0</div>
+        <div class="label">Native</div>
+      </div>
     </div>
-    <div class="settings-body" id="settings-body">
+    <div id="tools-container"></div>
+  </div>
+
+  <!-- Privacy Tab -->
+  <div class="tab-panel" id="panel-privacy">
+    <div class="settings-section">
+      <h3>Data Access</h3>
       <div class="setting-row">
         <div>
-          <div class="setting-label">Use community-verified tools</div>
+          <div class="setting-label">Allow metadata</div>
+          <div class="setting-hint">Subject, sender, date, titles</div>
+        </div>
+        <input type="checkbox" class="toggle" id="privacy-metadata" checked>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Allow content</div>
+          <div class="setting-hint">Email body, message text, docs</div>
+        </div>
+        <input type="checkbox" class="toggle" id="privacy-content">
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Allow attachments</div>
+          <div class="setting-hint">Files and media</div>
+        </div>
+        <input type="checkbox" class="toggle" id="privacy-attachments">
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>How It Works</h3>
+      <div class="info-card">
+        <p>
+          Data is only extracted <strong>when you ask your AI agent</strong> to use a tool.
+          Nothing is monitored, stored, or sent to Arcede. Data flows directly from your
+          browser to your chosen AI agent.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tab-panel" id="panel-settings">
+    <div class="settings-section">
+      <h3>Community Registry</h3>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Use community tools</div>
           <div class="setting-hint">Get tools discovered by other users</div>
         </div>
         <input type="checkbox" class="toggle" id="setting-use-community">
       </div>
       <div class="setting-row">
         <div>
-          <div class="setting-label">Help improve tools for everyone</div>
-          <div class="setting-hint">Share anonymized tool schemas (never selectors or personal data)</div>
+          <div class="setting-label">Contribute tool schemas</div>
+          <div class="setting-hint">Share anonymized definitions (never personal data)</div>
         </div>
         <input type="checkbox" class="toggle" id="setting-contribute">
       </div>
     </div>
   </div>
+
   <div class="footer">
-    <a href="https://github.com/nickarced/arcede-agent-gateway#connecting-mcp-clients" target="_blank">How to connect
-      your AI</a>
+    <a href="https://arcede.com/privacy" target="_blank">Privacy</a>
+    <a href="https://github.com/nickarced/arcede-agent-gateway" target="_blank">GitHub</a>
     <span class="footer-version" id="version"></span>
   </div>
   <script src="popup.js"></script>

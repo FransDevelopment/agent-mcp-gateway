@@ -36,7 +36,9 @@ export async function discoverPageTools(): Promise<void> {
     tools.push(...uniqueDomTools);
   }
 
-  if (tools.length === 0) return;
+  // NOTE: Do NOT return early if tools.length === 0.
+  // The service worker needs the PAGE_TOOLS message to bind curated tools
+  // to this tab, even when no DOM/WebMCP tools are discovered.
 
   // 4. Detect auth state
   const authState = detectAuthState();

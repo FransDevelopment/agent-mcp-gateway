@@ -27,6 +27,7 @@ const PORT = 3000;
 // In-flight MCP requests waiting for extension responses
 const pending = new Map(); // id → { resolve, reject }
 let sseClients = []; // SSE connections from bridge.html
+let notifyClients = []; // SSE connections from mcp-proxy (for push notifications)
 
 const server = createServer((req, res) => {
     const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -100,6 +101,40 @@ const server = createServer((req, res) => {
         req.on('end', () => {
             const { id, response } = JSON.parse(body);
             pending.get(id)?.resolve(response);
+        });
+        return;
+    }
+
+    // ─── GET /notify: proxy subscribes to push notifications via SSE ───
+    if (req.method === 'GET' && url.pathname === '/notify') {
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+        });
+        res.write('data: {"type":"connected"}\n\n');
+        notifyClients.push(res);
+        req.on('close', () => {
+            notifyClients = notifyClients.filter(c => c !== res);
+        });
+        console.log(`📡 Proxy subscribed to push notifications (${notifyClients.length} active)`);
+        return;
+    }
+
+    // ─── POST /notify: extension pushes tool-list-changed events ───
+    if (req.method === 'POST' && url.pathname === '/notify') {
+        res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' });
+        res.end('{"ok":true}');
+
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            // Push to all proxy SSE subscribers
+            for (const client of notifyClients) {
+                client.write(`data: ${body}\n\n`);
+            }
+            console.log(`📡 Pushed notification to ${notifyClients.length} proxies`);
         });
         return;
     }

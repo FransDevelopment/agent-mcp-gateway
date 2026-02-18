@@ -163,6 +163,17 @@ async function executeToolCall(
 
   const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+  // Look up curated interception config if available
+  let interceptionConfig: ExecuteToolMessage['interceptionConfig'] | undefined;
+  if (tool.source === 'curated-bundle') {
+    const { getCuratedForOrigin } = await import('../curated/index');
+    const curatedSet = getCuratedForOrigin(tool.origin);
+    const curatedTool = curatedSet?.tools.find(t => t.name === tool.name);
+    if (curatedTool?.interception) {
+      interceptionConfig = curatedTool.interception;
+    }
+  }
+
   const message: ExecuteToolMessage = {
     type: 'EXECUTE_TOOL',
     toolName: tool.name,
@@ -170,6 +181,7 @@ async function executeToolCall(
     source: tool.source,
     selector: tool.selector,
     requestId,
+    interceptionConfig,
   };
 
   try {

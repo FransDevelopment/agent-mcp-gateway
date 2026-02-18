@@ -164,11 +164,18 @@ export class ToolRegistry {
    * Tool names are namespaced by origin slug to avoid collisions.
    */
   getForMCP(): MCPToolDefinition[] {
-    return this.getAll().map(tool => ({
-      name: this.toMCPName(tool),
-      description: `[${tool.origin}] ${tool.description}`,
-      inputSchema: tool.inputSchema,
-    }));
+    return this.getAll()
+      .filter(tool => {
+        // Exclude curated tools that haven't been bound to an active tab yet.
+        // tabId === -1 means the user hasn't visited the site since extension loaded.
+        if (tool.source === 'curated-bundle' && tool.tabId === -1) return false;
+        return true;
+      })
+      .map(tool => ({
+        name: this.toMCPName(tool),
+        description: `[${tool.origin}] ${tool.description}`,
+        inputSchema: tool.inputSchema,
+      }));
   }
 
   /**
@@ -269,12 +276,19 @@ export class ToolRegistry {
   restore(json: string): void {
     try {
       const tools: RegisteredTool[] = JSON.parse(json);
-      this.tools.clear();
+      // Merge restored tools with existing ones (preserves curated tools
+      // that were registered synchronously at startup).
+      let restored = 0;
       for (const tool of tools) {
-        this.tools.set(tool.id, tool);
+        if (!this.tools.has(tool.id)) {
+          this.tools.set(tool.id, tool);
+          restored++;
+        }
       }
-      this.notifyListeners();
-      console.log(`[ToolRegistry] Restored ${tools.length} tools from storage`);
+      if (restored > 0) {
+        this.notifyListeners();
+      }
+      console.log(`[ToolRegistry] Restored ${restored} tools from storage (${this.tools.size} total)`);
     } catch (e) {
       console.error('[ToolRegistry] Failed to restore from storage:', e);
     }

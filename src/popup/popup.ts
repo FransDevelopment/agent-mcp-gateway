@@ -1,5 +1,5 @@
 /**
- * Extension Popup — Shows discovered tools, connection status, and onboarding.
+ * Extension Popup — Shows tools, privacy controls, and settings.
  */
 
 import { GATEWAY_VERSION } from '../shared/constants';
@@ -19,32 +19,41 @@ interface RegistryState {
   connectedClients: number;
 }
 
+// ─── Tab Navigation ───
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById(`panel-${tab.getAttribute('data-tab')}`)!;
+    panel.classList.add('active');
+  });
+});
+
+// ─── Render ───
+
 async function render(): Promise<void> {
   const versionEl = document.getElementById('version')!;
   versionEl.textContent = `v${GATEWAY_VERSION}`;
 
-  // Request registry state from service worker
   const response: RegistryState = await chrome.runtime.sendMessage({ type: 'GET_REGISTRY_STATE' });
   const tools: ToolInfo[] = response?.tools ?? [];
   const clientCount = response?.connectedClients ?? 0;
 
-  // ─── Connection Status ───
-
+  // Connection Status
   const statusDot = document.getElementById('status-dot')!;
   const connectionLabel = document.getElementById('connection-label')!;
 
   if (clientCount > 0) {
     statusDot.className = 'status-dot connected';
-    connectionLabel.textContent = clientCount === 1
-      ? '1 client'
-      : `${clientCount} clients`;
+    connectionLabel.textContent = clientCount === 1 ? '1 client' : `${clientCount} clients`;
   } else {
     statusDot.className = 'status-dot disconnected';
     connectionLabel.textContent = 'No clients';
   }
 
-  // ─── Stats ───
-
+  // Stats
   const origins = new Set(tools.map(t => t.origin));
   const nativeCount = tools.filter(t =>
     t.source === 'webmcp-native' || t.source === 'webmcp-declarative'
@@ -54,28 +63,27 @@ async function render(): Promise<void> {
   document.getElementById('origin-count')!.textContent = String(origins.size);
   document.getElementById('native-count')!.textContent = String(nativeCount);
 
-  // ─── Tool List or Onboarding ───
-
+  // Tool List or Onboarding
   const container = document.getElementById('tools-container')!;
 
   if (tools.length === 0) {
     container.innerHTML = `
       <div class="onboarding">
         <div class="icon">🔌</div>
-        <h2>Your AI agent gateway is active</h2>
-        <p>Tools will appear here as you browse the web.</p>
+        <h2>Your agent gateway is active</h2>
+        <p>Tools appear as you browse the web.</p>
         <div class="steps">
           <div class="step">
             <span class="step-num">1</span>
-            <span class="step-text">Browse to any website — tools are discovered automatically from forms, search bars, and WebMCP-enabled pages</span>
+            <span class="step-text">Browse to any website — tools are discovered automatically</span>
           </div>
           <div class="step">
             <span class="step-num">2</span>
-            <span class="step-text">Connect an MCP client (Claude Desktop, Cursor, Windsurf, etc.) to start using the discovered tools</span>
+            <span class="step-text">Connect an MCP client (Claude Desktop, Cursor, etc.)</span>
           </div>
           <div class="step">
             <span class="step-num">3</span>
-            <span class="step-text">Your AI agent can now interact with any website through your browser — using your existing logins</span>
+            <span class="step-text">Your AI agent can interact with sites using your existing logins</span>
           </div>
         </div>
       </div>
@@ -83,9 +91,7 @@ async function render(): Promise<void> {
     return;
   }
 
-  // ─── Render Tool Cards ───
-
-  // Group by origin
+  // Render Tool Cards grouped by origin
   const grouped = new Map<string, ToolInfo[]>();
   for (const tool of tools) {
     const list = grouped.get(tool.origin) ?? [];
@@ -97,11 +103,10 @@ async function render(): Promise<void> {
   for (const [origin, originTools] of grouped) {
     for (const tool of originTools) {
       const sourceBadge = getSourceBadge(tool.source);
-
       const authBadge = tool.authState === 'authenticated'
-        ? '<span class="badge auth" title="You are logged in to this site">Authenticated</span>'
+        ? '<span class="badge auth">Authenticated</span>'
         : tool.authState === 'login-required'
-          ? '<span class="badge no-auth" title="Log in to this site to enable this tool">Login Required</span>'
+          ? '<span class="badge no-auth">Login Required</span>'
           : '';
 
       html += `
@@ -120,15 +125,14 @@ async function render(): Promise<void> {
 function getSourceBadge(source: ToolSource): string {
   switch (source) {
     case 'webmcp-native':
-      return '<span class="badge native" title="Tool declared by the site via JavaScript API (navigator.modelContext)">WebMCP</span>';
     case 'webmcp-declarative':
-      return '<span class="badge native" title="Tool declared by the site via HTML form attributes">WebMCP</span>';
+      return '<span class="badge native">WebMCP</span>';
     case 'curated-bundle':
-      return '<span class="badge curated" title="Verified tool definition maintained by Arcede — works even without site support">Curated</span>';
+      return '<span class="badge curated">Curated</span>';
     case 'community-registry':
-      return '<span class="badge community" title="Tool verified by the Arcede community — contributed by multiple users">Community</span>';
+      return '<span class="badge community">Community</span>';
     case 'dom-fallback':
-      return '<span class="badge fallback" title="Tool auto-generated from page forms and inputs — may be less reliable">DOM</span>';
+      return '<span class="badge fallback">DOM</span>';
     default:
       return '<span class="badge fallback">Unknown</span>';
   }
@@ -140,30 +144,43 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
-// Initial render
-render();
+// ─── Privacy Controls ───
 
-// Settings panel toggle + load
-initSettings();
+async function initPrivacy(): Promise<void> {
+  // Load current privacy policy from storage
+  const result = await chrome.storage.local.get('privacyPolicy');
+  const policy = result.privacyPolicy ?? {
+    allowMetadata: true,
+    allowContent: false,
+    allowAttachments: false,
+  };
 
-// Re-render when tools change
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'tools_changed') {
-    render();
-  }
-});
+  const metadata = document.getElementById('privacy-metadata') as HTMLInputElement;
+  const content = document.getElementById('privacy-content') as HTMLInputElement;
+  const attachments = document.getElementById('privacy-attachments') as HTMLInputElement;
+
+  metadata.checked = policy.allowMetadata;
+  content.checked = policy.allowContent;
+  attachments.checked = policy.allowAttachments;
+
+  const savePolicy = () => {
+    chrome.storage.local.set({
+      privacyPolicy: {
+        allowMetadata: metadata.checked,
+        allowContent: content.checked,
+        allowAttachments: attachments.checked,
+      },
+    });
+  };
+
+  metadata.addEventListener('change', savePolicy);
+  content.addEventListener('change', savePolicy);
+  attachments.addEventListener('change', savePolicy);
+}
 
 // ─── Settings Panel ───
 
 async function initSettings(): Promise<void> {
-  // Toggle visibility
-  const toggle = document.getElementById('settings-toggle')!;
-  const body = document.getElementById('settings-body')!;
-  toggle.addEventListener('click', () => {
-    body.classList.toggle('open');
-  });
-
-  // Load current settings
   const settings: RegistrySettings = await chrome.runtime.sendMessage({ type: 'GET_REGISTRY_SETTINGS' });
 
   const useCommunity = document.getElementById('setting-use-community') as HTMLInputElement;
@@ -172,7 +189,6 @@ async function initSettings(): Promise<void> {
   useCommunity.checked = settings.useCommunityTools;
   contribute.checked = settings.contributeEnabled;
 
-  // Save on change
   useCommunity.addEventListener('change', () => {
     chrome.runtime.sendMessage({
       type: 'SAVE_REGISTRY_SETTINGS',
@@ -185,8 +201,20 @@ async function initSettings(): Promise<void> {
       type: 'SAVE_REGISTRY_SETTINGS',
       settings: {
         contributeEnabled: contribute.checked,
-        reportExecutions: contribute.checked,  // Tied together
+        reportExecutions: contribute.checked,
       },
     });
   });
 }
+
+// ─── Initialize ───
+
+render();
+initPrivacy();
+initSettings();
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'tools_changed') {
+    render();
+  }
+});

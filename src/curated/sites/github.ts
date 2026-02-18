@@ -11,7 +11,7 @@ export const githubTools: CuratedToolSet = {
     tools: [
         {
             name: 'github_search',
-            description: 'Search repositories, code, issues, pull requests, and users across GitHub. Supports GitHub search qualifiers.',
+            description: 'Search repositories, code, issues, and PRs on GitHub and return visible results. Supports GitHub search qualifiers. Returns matching items extracted from the search results page.',
             inputSchema: {
                 type: 'object',
                 properties: {

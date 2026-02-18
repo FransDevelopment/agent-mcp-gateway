@@ -45,6 +45,14 @@ export interface ExecuteToolMessage {
   source: ToolSource;
   selector?: string;
   requestId: string;
+  /** Optional API interception config for data-capable tool execution */
+  interceptionConfig?: {
+    urlPattern: string;
+    isRegex?: boolean;
+    method?: 'GET' | 'POST';
+    extractFields: Record<string, string>;
+    waitMs: number;
+  };
 }
 
 export interface DiscoverToolsMessage {

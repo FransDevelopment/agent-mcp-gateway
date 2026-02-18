@@ -10,9 +10,8 @@ import { startSessionManager } from './session-manager';
 import { toolRegistry } from './tool-registry';
 import { loadCuratedDefinitions } from '../curated/index';
 import { GATEWAY_NAME, GATEWAY_VERSION, BLOCKED_ORIGINS } from '../shared/constants';
-import { fetchRegistryTools, reportExecution, contributeToolDefinition, getContributorId } from '../registry/client';
+import { fetchRegistryTools, reportExecution } from '../registry/client';
 import { getRegistrySettings, saveRegistrySettings } from '../registry/settings';
-import { sanitizeForContribution } from '../registry/sanitizer';
 
 console.log(`[${GATEWAY_NAME}] Service worker starting (v${GATEWAY_VERSION})`);
 
@@ -36,6 +35,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   } else if (details.reason === 'update') {
     console.log(`[${GATEWAY_NAME}] Extension updated to v${GATEWAY_VERSION}`);
   }
+
+  // Clear stale tool registry from storage — curated tools are re-registered
+  // from source on every service worker startup.
+  await chrome.storage.local.remove('toolRegistry');
 
   // Re-inject content scripts into all open tabs to re-discover tools
   const tabs = await chrome.tabs.query({});
@@ -104,24 +107,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// ─── Auto-Contribution on Tool Discovery ───
-// When new tools are registered and user has opted in, contribute to the registry
+// ─── Push Tool List Changes to MCP Clients (via bridge) ───
+// Debounced: coalesces rapid changes (multiple tools registering on page load)
 
-toolRegistry.onChange(async () => {
-  const settings = await getRegistrySettings();
-  if (!settings.contributeEnabled) return;
+let notifyTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  const contributorId = await getContributorId();
-  const tools = toolRegistry.getAll();
-
-  for (const tool of tools) {
-    const sanitized = sanitizeForContribution(tool, contributorId);
-    if (sanitized) {
-      contributeToolDefinition(sanitized).catch(() => {
-        // Best-effort contribution
-      });
-    }
-  }
+toolRegistry.onChange(() => {
+  if (notifyTimeout) clearTimeout(notifyTimeout);
+  notifyTimeout = setTimeout(() => {
+    notifyTimeout = null;
+    const notification = {
+      jsonrpc: '2.0',
+      method: 'notifications/tools/list_changed',
+    };
+    // POST to bridge — best-effort, bridge may not be running
+    fetch('http://localhost:3000/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notification),
+    }).catch(() => {
+      // Bridge not running — that's ok
+    });
+    console.log(`[${GATEWAY_NAME}] Pushed tools/list_changed notification`);
+  }, 500);
 });
 
 console.log(`[${GATEWAY_NAME}] Service worker ready`);

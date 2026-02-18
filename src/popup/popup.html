@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Arcede Agent Gateway</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      width: 380px;
+      max-height: 520px;
+      overflow-y: auto;
+      background: #fafafa;
+      color: #1a1a1a;
+    }
+
+    /* Header */
+    .header {
+      padding: 16px;
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .header .version {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.connected {
+      background: #4caf50;
+      box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+    }
+
+    .status-dot.disconnected {
+      background: #616161;
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .stat {
+      text-align: center;
+      flex: 1;
+    }
+
+    .stat .num {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .stat .label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tool list */
+    .tools-list {
+      padding: 8px;
+    }
+
+    .tool {
+      padding: 10px 12px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e8e8e8;
+    }
+
+    .tool .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .tool .origin {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .tool .badges {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: help;
+    }
+
+    .badge.native {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .badge.curated {
+      background: #ede7f6;
+      color: #5e35b1;
+    }
+
+    .badge.fallback {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .badge.auth {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .badge.no-auth {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
+    .badge.community {
+      background: #e0f2f1;
+      color: #00695c;
+    }
+
+    /* Onboarding / Empty state */
+    .onboarding {
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .onboarding .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .onboarding h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .onboarding p {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+
+    .onboarding .steps {
+      text-align: left;
+      margin: 16px 0;
+      padding: 0 12px;
+    }
+
+    .onboarding .step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .onboarding .step-num {
+      width: 20px;
+      height: 20px;
+      background: #111;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .onboarding .step-text {
+      line-height: 1.5;
+      padding-top: 1px;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f8f8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer a {
+      font-size: 11px;
+      color: #1565c0;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .footer .footer-version {
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    /* Settings panel */
+    .settings {
+      padding: 12px 16px;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f8f8;
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .settings-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .settings-header .gear {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .settings-body {
+      display: none;
+      margin-top: 8px;
+    }
+
+    .settings-body.open {
+      display: block;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      gap: 12px;
+    }
+
+    .setting-label {
+      font-size: 11px;
+      color: #444;
+    }
+
+    .setting-hint {
+      font-size: 10px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .toggle {
+      appearance: none;
+      width: 36px;
+      height: 20px;
+      border-radius: 10px;
+      background: #ccc;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle:checked {
+      background: #4caf50;
+    }
+
+    .toggle::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+    }
+
+    .toggle:checked::before {
+      transform: translateX(16px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Arcede Agent Gateway</h1>
+    <div class="connection-status" id="connection-status">
+      <span class="status-dot disconnected" id="status-dot"></span>
+      <span id="connection-label">No clients</span>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="num" id="tool-count">0</div>
+      <div class="label">Tools</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="origin-count">0</div>
+      <div class="label">Sites</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="native-count">0</div>
+      <div class="label">Native</div>
+    </div>
+  </div>
+  <div id="tools-container"></div>
+  <div class="settings" id="settings-panel">
+    <div class="settings-header" id="settings-toggle">
+      <h3>Community Registry</h3>
+      <span class="gear">⚙</span>
+    </div>
+    <div class="settings-body" id="settings-body">
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Use community-verified tools</div>
+          <div class="setting-hint">Get tools discovered by other users</div>
+        </div>
+        <input type="checkbox" class="toggle" id="setting-use-community">
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Help improve tools for everyone</div>
+          <div class="setting-hint">Share anonymized tool schemas (never selectors or personal data)</div>
+        </div>
+        <input type="checkbox" class="toggle" id="setting-contribute">
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <a href="https://github.com/nickarced/arcede-agent-gateway#connecting-mcp-clients" target="_blank">How to connect
+      your AI</a>
+    <span class="footer-version" id="version"></span>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>

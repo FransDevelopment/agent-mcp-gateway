@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+        "arcede-browser": {
+            "command": "node",
+            "args": [
+                "/Users/frans/Documents/ARCEDE/chromeExtensions/arcede-agent-gateway/test/mcp-proxy.js"
+            ]
+        }
+    }
+}

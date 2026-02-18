@@ -1,0 +1,25 @@
+{
+  "name": "arcede-agent-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that discovers WebMCP tools and bridges them to standard MCP. Turns your browser into a universal AI agent gateway.",
+  "author": "Arcede <hello@arcede.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArcedeLabs/arcede-agent-gateway.git"
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "package": "npm run build && cd dist && zip -r ../arcede-agent-gateway.zip ."
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/node": "^25.2.3",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}

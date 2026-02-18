@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Arcede Bridge</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 20px;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
+        .ok {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .err {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .pending {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🌉 Arcede MCP Bridge</h1>
+
+    <div id="status" class="status pending">Connecting to bridge server...</div>
+
+    <div style="margin-top: 20px;">
+        <label for="ext-id">Extension ID</label>
+        <input id="ext-id" type="text"
+            placeholder="Paste from chrome://extensions (e.g. abcdefghijklmnopqrstuvwxyzabcdef)">
+        <button onclick="connect()">Connect</button>
+    </div>
+
+    <div id="ext-status" class="status" style="display:none"></div>
+
+    <div style="margin-top: 20px;">
+        <label>Request log</label>
+        <pre id="log">Waiting for MCP requests...</pre>
+    </div>
+
+    <script>
+        let extensionId = localStorage.getItem('arcede_ext_id') || '';
+        let connected = false;
+
+        document.getElementById('ext-id').value = extensionId;
+
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent;
+        }
+
+        function setStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = `status ${type}`;
+        }
+
+        function connect() {
+            extensionId = document.getElementById('ext-id').value.trim();
+            if (!extensionId) { alert('Paste your Extension ID first'); return; }
+            localStorage.setItem('arcede_ext_id', extensionId);
+
+            // Test connection
+            chrome.runtime.sendMessage(extensionId, { jsonrpc: '2.0', id: 'test', method: 'ping', params: {} }, (resp) => {
+                const extStatus = document.getElementById('ext-status');
+                extStatus.style.display = 'block';
+                if (chrome.runtime.lastError) {
+                    extStatus.textContent = '❌ Extension not found: ' + chrome.runtime.lastError.message;
+                    extStatus.className = 'status err';
+                } else {
+                    extStatus.textContent = '✅ Extension connected!';
+                    extStatus.className = 'status ok';
+                    connected = true;
+                    log('Extension connected: ' + JSON.stringify(resp));
+                }
+            });
+        }
+
+        // Subscribe to SSE from bridge server
+        const evtSource = new EventSource('/events');
+
+        evtSource.onopen = () => setStatus('✅ Bridge server connected. Paste your Extension ID above.', 'ok');
+        evtSource.onerror = () => setStatus('❌ Bridge server not running. Start it with: node test/bridge-server.js', 'err');
+
+        evtSource.onmessage = async (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'connected') return;
+
+            const { id, request } = data;
+            log(`→ ${request.method} (id: ${id})`);
+
+            if (!connected || !extensionId) {
+                log('⚠ Not connected to extension yet');
+                return;
+            }
+
+            // Forward to extension
+            chrome.runtime.sendMessage(extensionId, request, (response) => {
+                if (chrome.runtime.lastError) {
+                    log(`✗ Error: ${chrome.runtime.lastError.message}`);
+                    return;
+                }
+                log(`← ${JSON.stringify(response).slice(0, 120)}...`);
+
+                // Send response back to bridge server
+                fetch('/response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, response }),
+                });
+            });
+        };
+
+        // Auto-connect if we have a saved ID
+        if (extensionId) {
+            setTimeout(connect, 500);
+        }
+    </script>
+</body>
+
+</html>
